@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Aplicación de Manufactura</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+
+    header, footer {
+      text-align: center;
+    }
+
+    h1, h2 {
+      color: #003366;
+    }
+
+    section {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+
+    ul {
+      list-style-type: square;
+    }
+
+    .boton, .descargar, button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .boton:hover, .descargar:hover, button:hover {
+      background-color: #218838;
+    }
+
+    iframe {
+      width: 80%;
+      height: 600px;
+      border: 1px solid #ccc;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+    }
+
+    #chat-container {
+      background: #0f0f0f;
+      color: #00ffff;
+      font-family: 'Orbitron', sans-serif;
+      border: 2px solid #00ffff;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 15px #00ffff;
+    }
+
+    #messages {
+      height: 150px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+
+    .message.user { color: #00ff88; }
+    .message.bot { color: #00bfff; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Análisis y Herramientas de Manufactura</h1>
+</header>
+
+<section>
+  <h2>¿Qué es el análisis de las superficies a maquinar?</h2>
+  <p>Estudio de características geométricas, físicas y mecánicas para garantizar calidad y eficiencia.</p>
+  <ul>
+    <li><strong>Forma y dimensiones:</strong> Geometría y tolerancias.</li>
+    <li><strong>Material:</strong> Selección de herramientas.</li>
+    <li><strong>Estado de la superficie:</strong> Rugosidad, dureza.</li>
+    <li><strong>Accesibilidad:</strong> Acceso para el mecanizado.</li>
+  </ul>
+  <button class="boton" onclick="mostrarPDF()">Mostrar PDF</button>
+  <div id="visorPDF" style="display:none; text-align:center;">
+    <h3>Manual PDF</h3>
+    <iframe src="manufactura.pdf" type="application/pdf"></iframe><br>
+    <a href="manufactura.pdf" download class="descargar">Descargar PDF</a>
+  </div>
+</section>
+
+<section>
+  <h2>Formulario: Tolerancias Geométricas</h2>
+  <form id="formulario">
+    <label>1. ¿Qué es la tolerancia geométrica?</label><br>
+    <input type="text" name="pregunta1" required><br><br>
+    <label>2. ¿Qué representa el símbolo ⌀ en los dibujos técnicos?</label><br>
+    <input type="text" name="pregunta2" required><br><br>
+    <label>3. Menciona un tipo de tolerancia geométrica.</label><br>
+    <input type="text" name="pregunta3" required><br><br>
+    <label>4. ¿Por qué es importante la tolerancia en manufactura?</label><br>
+    <input type="text" name="pregunta4" required><br><br>
+    <label>5. ¿Qué norma se utiliza comúnmente para definir tolerancias geométricas?</label><br>
+    <input type="text" name="pregunta5" required><br><br>
+    <button type="submit">Guardar en Excel</button>
+  </form>
+</section>
+
+<section>
+  <h2>Generador de Cotizaciones</h2>
+  <label>Nombre del Cliente:</label>
+  <input type="text" id="cliente"><br><br>
+  <table id="tabla-productos">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio Unitario</th>
+        <th>Total</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody id="tbody-productos">
+      <tr>
+        <td><input type="text" class="producto"></td>
+        <td><input type="number" class="cantidad" oninput="actualizarTotal(this)"></td>
+        <td><input type="number" class="precio" oninput="actualizarTotal(this)"></td>
+        <td class="total">0</td>
+        <td><button onclick="eliminarFila(this)">Eliminar</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <button onclick="agregarFila()">Agregar Producto</button>
+  <button onclick="generarExcel()">Guardar Cotización en Excel</button>
+</section>
+
+<section>
+  <h2>ChatBot Futurista</h2>
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div>
+      <input type="text" id="userInput" placeholder="Escribe algo...">
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2025 Aplicación de Manufactura</p>
+</footer>
+
+<script>
+  function mostrarPDF() {
+    const visor = document.getElementById('visorPDF');
+    visor.style.display = visor.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // Formulario -> Excel
+  document.getElementById("formulario").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const datos = Array.from(new FormData(e.target).entries());
+    const headers = ["Pregunta", "Respuesta"];
+    const data = datos.map(([pregunta, respuesta], i) => [`Pregunta ${i + 1}`, respuesta]);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
+    XLSX.writeFile(wb, "respuestas_tolerancia_geometrica.xlsx");
+  });
+
+  // Cotización
+  function actualizarTotal(elemento) {
+    const fila = elemento.closest("tr");
+    const cantidad = parseFloat(fila.querySelector(".cantidad").value) || 0;
+    const precio = parseFloat(fila.querySelector(".precio").value) || 0;
+    fila.querySelector(".total").innerText = (cantidad * precio).toFixed(2);
+  }
+
+  function agregarFila() {
+    const tabla = document.getElementById("tbody-productos");
+    const nueva = tabla.rows[0].cloneNode(true);
+    nueva.querySelectorAll("input").forEach(i => i.value = "");
+    nueva.querySelector(".total").innerText = "0";
+    tabla.appendChild(nueva);
+  }
+
+  function eliminarFila(btn) {
+    const fila = btn.closest("tr");
+    const tabla = document.getElementById("tbody-productos");
+    if (tabla.rows.length > 1) fila.remove();
+  }
+
+  function generarExcel() {
+    const cliente = document.getElementById("cliente").value;
+    const filas = document.querySelectorAll("#tbody-productos tr");
+    const datos = [["Cliente:", cliente], [], ["Producto", "Cantidad", "Precio Unitario", "Total"]];
+    filas.forEach(fila => {
+      const prod = fila.querySelector(".producto").value;
+      const cant = fila.querySelector(".cantidad").value;
+      const prec = fila.querySelector(".precio").value;
+      const total = fila.querySelector(".total").innerText;
+      datos.push([prod, cant, prec, total]);
+    });
+    const hoja = XLSX.utils.aoa_to_sheet(datos);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Cotización");
+    XLSX.writeFile(libro, "Cotizacion_" + cliente + ".xlsx");
+  }
+
+  // Chatbot
+  function addMessage(text, sender) {
+    const msg = document.createElement("div");
+    msg.classList.add("message", sender);
+    msg.innerText = text;
+    document.getElementById("messages").appendChild(msg);
+    document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+  }
+
+  function getBotResponse(input) {
+    const lower = input.toLowerCase();
+    if (lower.includes("hora")) {
+      return "La hora actual es: " + new Date().toLocaleTimeString();
+    } else if (lower.includes("clima")) {
+      return "Hoy el clima es soleado con 25°C (simulado)";
+    } else if (lower.includes("nombre")) {
+      return "Soy un bot futurista al servicio del conocimiento.";
+    } else if (lower.includes("hola")) {
+      return "¡Hola! ¿En qué puedo ayudarte?";
+    } else if (lower.includes("gracias")) {
+      return "¡De nada! 😊";
+    } else {
+      return "No entendí. Prueba: '¿Qué hora es?' o '¿Cómo está el clima?'.";
+    }
+  }
+
+  function sendMessage() {
+    const input = document.getElementById("userInput");
+    const texto = input.value.trim();
+    if (!texto) return;
+    addMessage("Tú: " + texto, "user");
+    setTimeout(() => {
+      addMessage("Bot: " + getBotResponse(texto), "bot");
+    }, 500);
+    input.value = "";
+  }
+
+  document.getElementById("userInput").addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
+
+</body>
+</html>
